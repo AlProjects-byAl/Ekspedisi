@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekspedisi Berkas - Pelacak Perjalanan Dokumen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#002e5b">
+    <script>
+        // Init theme early to prevent flash
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-folder-tree logo-icon"></i>
+                <h2>EkspedisiBerkas</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="files">
+                    <i class="fa-solid fa-file-lines"></i> Daftar Berkas
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <i class="fa-solid fa-users-gear"></i> Pengaturan
+                </a>
+                <a href="#" class="nav-item" data-view="database">
+                    <i class="fa-solid fa-database"></i> Koneksi Database
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btnExportCSV" class="btn btn-success btn-full" style="margin-bottom: 0.5rem;"><i class="fa-solid fa-file-csv"></i> Ekspor Laporan (CSV)</button>
+                <button id="btnExport" class="btn btn-secondary btn-full"><i class="fa-solid fa-download"></i> Backup Data (JSON)</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Cari no berkas, nama pemohon...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn btn-icon" id="btnThemeToggle" title="Ganti Tema (Terang/Gelap)" style="background: transparent; border: 1px solid var(--border); color: var(--text-main);">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <div id="connectionStatus" class="connection-status status-disconnected" title="Klik untuk atur koneksi database">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        <span>Tidak Terhubung</span>
+                    </div>
+                    <div id="loadingIndicator" class="loading-indicator" style="display:none;">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Memuat...</span>
+                    </div>
+                    <button class="btn btn-primary" id="btnTambahBerkas"><i class="fa-solid fa-plus"></i> Berkas Baru</button>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Dashboard View -->
+                <section id="viewDashboard" class="view-section active">
+                    <h1 class="page-title">Ringkasan Berkas</h1>
+                    <div class="stats-grid">
+                        <div class="stat-card" data-status="all">
+                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fa-solid fa-copy"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Berkas</h3>
+                                <p class="stat-number" id="statTotal">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-status="diterima">
+                            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                                <i class="fa-solid fa-inbox"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Baru Diterima</h3>
+                                <p class="stat-number" id="statDiterima">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-status="proses-ukur">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fa-solid fa-ruler-combined"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Proses Ukur</h3>
+                                <p class="stat-number" id="statProsesUkur">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-status="pemeriksaan">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Sedang Diperiksa</h3>
+                                <p class="stat-number" id="statPemeriksaan">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-status="selesai">
+                            <div class="stat-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Selesai</h3>
+                                <p class="stat-number" id="statSelesai">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem;">
+                        <div class="dashboard-recent">
+                            <div class="section-header">
+                                <h2>Aktivitas Terbaru</h2>
+                            </div>
+                            <div class="recent-list" id="recentActivityList">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="dashboard-staff-stats">
+                            <div class="section-header">
+                                <h2>Beban Kerja Petugas</h2>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama Petugas</th>
+                                            <th>Proses Ukur</th>
+                                            <th>Pemeriksaan</th>
+                                            <th>Selesai</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="staffStatsBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Files View -->
+                <section id="viewFiles" class="view-section">
+                    <div class="section-header">
+                        <h1 class="page-title">Daftar Berkas</h1>
+                        <div class="filter-group">
+                            <select id="filterTahun" class="form-control form-select">
+                                <option value="all">Semua Tahun</option>
+                            </select>
+                            <select id="filterStatus" class="form-control form-select">
+                                <option value="all">Semua Status</option>
+                                <option value="Diterima">Diterima</option>
+                                <option value="Proses Ukur">Proses Ukur</option>
+                                <option value="Pemeriksaan">Pemeriksaan</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                            <select id="filterPetugas" class="form-control form-select">
+                                <option value="all">Semua Petugas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Berkas</th>
+                                    <th>Tahun</th>
+                                    <th>Pemohon</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Masuk</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Settings View -->
+                <section id="viewSettings" class="view-section">
+                    <h1 class="page-title">Pengaturan</h1>
+                    <div class="settings-grid settings-grid-3">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Petugas Ukur</h3>
+                                <button class="btn btn-sm btn-primary" id="btnAddPetugas">Tambah</button>
+                            </div>
+                            <ul class="staff-list" id="listPetugas">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Pembantu Ukur</h3>
+                                <button class="btn btn-sm btn-primary" id="btnAddPembantu">Tambah</button>
+                            </div>
+                            <ul class="staff-list" id="listPembantu">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-list-check" style="color:var(--primary)"></i> Jenis Permohonan</h3>
+                                <button class="btn btn-sm btn-primary" id="btnAddPermohonan">Tambah</button>
+                            </div>
+                            <ul class="staff-list" id="listPermohonan">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- WA Template Editor -->
+                    <div class="settings-card" style="margin-top: 1.5rem;">
+                        <div class="card-header">
+                            <h3><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Template Pesan WhatsApp</h3>
+                            <button class="btn btn-sm btn-secondary" id="btnResetTemplate">Reset Default</button>
+                        </div>
+                        <div class="form-group" style="margin-top: 0.75rem;">
+                            <label>Isi Pesan (Variabel: <code>{salam}</code>, <code>{petugas}</code>, <code>{pemohon}</code>, <code>{permohonan}</code>, <code>{noBerkas}</code>, <code>{tahun}</code>, <code>{status}</code>)</label>
+                            <textarea id="waTemplate" class="form-control" rows="7" style="resize: vertical; font-family: monospace; font-size: 0.85rem;"></textarea>
+                            <small class="help-text"><code>{salam}</code> akan otomatis diisi: "pagi", "siang", "sore", atau "malam" sesuai jam saat pesan dikirim.</small>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <button class="btn btn-primary" id="btnSimpanTemplate"><i class="fa-solid fa-save"></i> Simpan Template</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Database View -->
+                <section id="viewDatabase" class="view-section">
+                    <h1 class="page-title">Koneksi Database Google Sheets</h1>
+                    <div class="settings-card" style="max-width: 700px;">
+                        <div id="dbStatusBanner" class="db-status-banner banner-disconnected">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span id="dbStatusText">Belum terhubung ke Google Sheets</span>
+                        </div>
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label>URL Google Apps Script (Web App URL)</label>
+                            <input type="url" id="inputScriptUrl" class="form-control" placeholder="https://script.google.com/macros/s/...">
+                            <small class="help-text">Salin dan tempel URL yang Anda dapatkan setelah melakukan Deploy di Google Apps Script.</small>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                            <button class="btn btn-primary" id="btnSimpanUrl"><i class="fa-solid fa-plug"></i> Simpan & Hubungkan</button>
+                            <button class="btn btn-danger" id="btnHapusUrl"><i class="fa-solid fa-unlink"></i> Putuskan Koneksi</button>
+                        </div>
+                        <div class="info-box" style="margin-top: 1.5rem;">
+                            <h4><i class="fa-solid fa-circle-info"></i> Panduan Singkat</h4>
+                            <ol style="margin-top: 0.5rem; padding-left: 1.2rem; line-height: 2;">
+                                <li>Buka file <strong>GoogleAppsScript.js</strong> di folder ini, salin semua isinya.</li>
+                                <li>Buka <a href="https://sheets.new" target="_blank" style="color: var(--primary);">Google Sheets baru</a>, lalu klik <strong>Ekstensi → Apps Script</strong>.</li>
+                                <li>Hapus kode yang ada, paste kode yang disalin, lalu klik ikon <strong>Simpan (💾)</strong>.</li>
+                                <li>Pilih fungsi <strong>setupDatabase</strong> di dropdown, lalu klik tombol <strong>Run (▶)</strong> dan setujui izin akses.</li>
+                                <li>Klik menu <strong>Deploy → New Deployment → Web App</strong>. Pada bagian "Who has access" pilih <strong>Anyone</strong>. Klik Deploy.</li>
+                                <li>Salin URL yang muncul dan paste di kolom di atas, lalu klik <strong>Simpan & Hubungkan</strong>.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form Berkas -->
+    <div class="modal-overlay" id="modalBerkas">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="modalTitle">Tambah Berkas Baru</h2>
+                <button class="btn-close" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="formBerkas">
+                    <input type="hidden" id="berkasId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>No. Berkas *</label>
+                            <input type="text" id="inputNoBerkas" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tahun *</label>
+                            <input type="number" id="inputTahun" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Pemohon *</label>
+                            <input type="text" id="inputPemohon" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Kuasa (Opsional)</label>
+                            <input type="text" id="inputKuasa" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jenis Permohonan *</label>
+                            <select id="inputPermohonan" class="form-control form-select" required>
+                                <option value="">-- Pilih Permohonan --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nomor Telepon (WhatsApp) *</label>
+                            <div class="input-with-icon">
+                                <i class="fa-brands fa-whatsapp text-success"></i>
+                                <input type="tel" id="inputTelepon" class="form-control" placeholder="Contoh: 081234567890" required>
+                            </div>
+                            <small class="help-text">Nomor telepon akan otomatis bisa dihubungi via WA.</small>
+                        </div>
+                        
+                        <div class="section-divider full-width">Penugasan & Jadwal</div>
+
+                        <div class="form-group">
+                            <label>Petugas Ukur</label>
+                            <select id="selectPetugas" class="form-control form-select">
+                                <option value="">-- Pilih Petugas --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pembantu Ukur</label>
+                            <select id="selectPembantu" class="form-control form-select">
+                                <option value="">-- Pilih Pembantu --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tanggal Terima Berkas *</label>
+                            <input type="date" id="tglTerima" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Ukur</label>
+                            <input type="date" id="tglUkur" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Periksa</label>
+                            <input type="date" id="tglPeriksa" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Selesai</label>
+                            <input type="date" id="tglSelesai" class="form-control">
+                        </div>
+
+                        <div class="section-divider full-width">Keterangan Tambahan</div>
+                        <div class="form-group full-width">
+                            <label>Catatan</label>
+                            <textarea id="inputCatatan" class="form-control" rows="3" placeholder="Tambahkan informasi khusus mengenai berkas ini..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelModal">Batal</button>
+                <button class="btn btn-primary" id="btnSaveBerkas">Simpan Berkas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Pesan WA -->
+    <div class="modal-overlay" id="modalWA">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Kirim Pesan WhatsApp</h2>
+                <button class="btn-close" id="btnCloseWA"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Pratinjau & Edit Pesan Sebelum Kirim</label>
+                    <textarea id="waPreviewText" class="form-control" rows="9" style="resize: vertical; font-family: inherit; line-height: 1.6;"></textarea>
+                    <small class="help-text">Anda dapat mengedit pesan ini sebelum dikirim. Perubahan di sini tidak mempengaruhi template.</small>
+                </div>
+                <div class="form-group" style="margin-top: 0.5rem;">
+                    <label>Nomor Tujuan</label>
+                    <div class="input-with-icon">
+                        <i class="fa-brands fa-whatsapp text-success"></i>
+                        <input type="text" id="waTargetPhone" class="form-control" readonly style="background:#f8fafc;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelWA">Batal</button>
+                <a id="btnKirimWA" href="#" target="_blank" class="btn btn-success"><i class="fa-brands fa-whatsapp"></i> Buka WhatsApp & Kirim</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Berkas -->
+    <div class="modal-overlay" id="modalDetail">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-invoice" style="color:var(--primary)"></i> Detail Berkas</h2>
+                <button class="btn-close" id="btnCloseDetail"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <h3>Informasi Pemohon</h3>
+                        <table class="detail-table">
+                            <tr><th>No. Berkas</th><td id="detNoBerkas"></td></tr>
+                            <tr><th>Tahun</th><td id="detTahun"></td></tr>
+                            <tr><th>Nama Pemohon</th><td id="detPemohon"></td></tr>
+                            <tr><th>Nama Kuasa</th><td id="detKuasa"></td></tr>
+                            <tr><th>Jenis Permohonan</th><td id="detPermohonan"></td></tr>
+                            <tr><th>No. Telepon</th><td id="detTelepon"></td></tr>
+                        </table>
+                    </div>
+                    <div class="detail-card">
+                        <h3>Penugasan</h3>
+                        <table class="detail-table">
+                            <tr><th>Status Saat Ini</th><td id="detStatus"></td></tr>
+                            <tr><th>Petugas Ukur</th><td id="detPetugas"></td></tr>
+                            <tr><th>Pembantu Ukur</th><td id="detPembantu"></td></tr>
+                        </table>
+                        <div class="notes-box">
+                            <h4>Catatan:</h4>
+                            <p id="detCatatan" style="white-space: pre-wrap;">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem;">Timeline Berkas</h3>
+                <div class="timeline" id="detTimeline">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnEditFromDetail"><i class="fa-solid fa-pen"></i> Edit Berkas</button>
+                <button class="btn btn-secondary" id="btnCloseDetail2">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-view="dashboard">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-view="files">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Berkas</span>
+        </a>
+        <a href="#" class="nav-item" data-view="settings">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>Pengaturan</span>
+        </a>
+        <a href="#" class="nav-item" data-view="database">
+            <i class="fa-solid fa-database"></i>
+            <span>Database</span>
+        </a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="sampleData.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered!', reg))
+                    .catch(err => console.log('Service Worker registration failed!', err));
+            });
+        }
+    </script>
+</body>
+</html>
