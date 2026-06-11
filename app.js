@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (scriptUrl) {
         loadDataFromSheets();
     } else {
+        const splash = document.getElementById('splashScreen');
+        if (splash) splash.classList.add('hidden');
         showToast('Hubungkan ke Google Sheets terlebih dahulu di menu Koneksi Database.', 'info', 5000);
     }
 
@@ -172,6 +174,8 @@ async function loadDataFromSheets() {
         console.error(err);
     } finally {
         showLoading(false);
+        const splash = document.getElementById('splashScreen');
+        if (splash) splash.classList.add('hidden');
     }
 }
 

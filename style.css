@@ -322,7 +322,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 1100;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -579,6 +579,32 @@ body {
         background-color: rgba(0, 46, 91, 0.1);
         border-radius: 8px;
     }
+
+    /* Modal on mobile: tidak tertutup bottom nav */
+    .modal-overlay {
+        align-items: flex-start;
+        padding-top: 1rem;
+        padding-bottom: 70px; /* tinggi bottom nav */
+    }
+
+    .modal-content {
+        max-height: calc(100vh - 80px - 70px); /* topbar + bottom nav */
+        width: 95%;
+        border-radius: 12px;
+    }
+
+    .modal-lg {
+        max-width: 95%;
+    }
+
+    /* Toast di atas bottom nav */
+    .toast {
+        bottom: calc(70px + 1rem);
+        right: 1rem;
+        left: 1rem;
+        text-align: center;
+        justify-content: center;
+    }
 }
 
 /* ===== DATABASE / CONNECTION STATUS ===== */
@@ -674,7 +700,7 @@ body {
     align-items: center;
     gap: 10px;
     box-shadow: var(--shadow-lg);
-    z-index: 999;
+    z-index: 1200;
     animation: slideUp 0.3s ease;
 }
 
@@ -815,6 +841,58 @@ body {
     0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
     70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* ===== SPLASH SCREEN ===== */
+.splash-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-content {
+    text-align: center;
+    animation: fadeIn 1s ease-out;
+}
+
+.splash-content i {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--warning);
+}
+
+.splash-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.splash-content p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.splash-content .credit {
+    display: block;
+    margin-top: 3rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Row telat */
