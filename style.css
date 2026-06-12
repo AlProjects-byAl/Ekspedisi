@@ -429,6 +429,19 @@ body {
     font-size: 1.2rem;
 }
 
+.input-with-icon .prefix-text {
+    position: absolute;
+    left: 2.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+.input-with-icon input.has-prefix {
+    padding-left: 5.2rem !important;
+}
+
 .input-with-icon input {
     padding-left: 2.5rem;
     width: 100%;

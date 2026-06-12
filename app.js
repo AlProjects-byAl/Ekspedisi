@@ -733,7 +733,16 @@ window.editBerkas = function(id) {
     document.getElementById('inputPemohon').value = b.namaPemohon;
     document.getElementById('inputKuasa').value = b.namaKuasa || '';
     document.getElementById('inputPermohonan').value = b.jenisPemohon || '';
-    document.getElementById('inputTelepon').value = b.noTelepon;
+    
+    // Tampilkan nomor telepon tanpa prefix
+    let phoneToEdit = String(b.noTelepon || '').replace(/\D/g, '');
+    if (phoneToEdit.startsWith('62')) {
+        phoneToEdit = phoneToEdit.substring(2);
+    } else if (phoneToEdit.startsWith('0')) {
+        phoneToEdit = phoneToEdit.substring(1);
+    }
+    document.getElementById('inputTelepon').value = phoneToEdit;
+    
     document.getElementById('selectPetugas').value = b.petugasUkur || '';
     document.getElementById('selectPembantu').value = b.pembantuUkur || '';
     document.getElementById('tglTerima').value = formatDateForInput(b.tglTerima);
