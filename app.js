@@ -669,6 +669,18 @@ async function saveBerkas() {
     }
 
     const id = document.getElementById('berkasId').value;
+    
+    // Format Nomor Telepon
+    let phoneVal = document.getElementById('inputTelepon').value.trim();
+    phoneVal = phoneVal.replace(/\D/g, ''); // Hapus karakter selain angka
+    if (phoneVal.startsWith('0')) {
+        phoneVal = '+62' + phoneVal.substring(1);
+    } else if (phoneVal.startsWith('62')) {
+        phoneVal = '+' + phoneVal;
+    } else if (phoneVal.length > 0) {
+        phoneVal = '+62' + phoneVal;
+    }
+
     const newBerkas = {
         id: id || Date.now().toString(),
         noBerkas: document.getElementById('inputNoBerkas').value,
@@ -676,7 +688,7 @@ async function saveBerkas() {
         namaPemohon: document.getElementById('inputPemohon').value,
         namaKuasa: document.getElementById('inputKuasa').value,
         jenisPemohon: document.getElementById('inputPermohonan').value,
-        noTelepon: document.getElementById('inputTelepon').value,
+        noTelepon: phoneVal,
         petugasUkur: document.getElementById('selectPetugas').value,
         pembantuUkur: document.getElementById('selectPembantu').value,
         tglTerima: document.getElementById('tglTerima').value,
