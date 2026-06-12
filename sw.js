@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ekspedisi-berkas-v1';
+const CACHE_NAME = 'ekspedisi-berkas-v2';
 const ASSETS = [
   './',
   './index.html',
