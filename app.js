@@ -305,15 +305,16 @@ function updateStaffStats() {
     tbody.innerHTML = '';
     
     if (listPetugas.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="help-text" style="text-align:center;">Belum ada petugas terdaftar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="help-text" style="text-align:center;">Belum ada petugas terdaftar.</td></tr>';
         return;
     }
 
     listPetugas.forEach(p => {
-        let proses = 0, riksa = 0, selesai = 0;
+        let terima = 0, proses = 0, riksa = 0, selesai = 0;
         listBerkas.forEach(b => {
             if (b.petugasUkur === p) {
-                if (b.status === "Proses Ukur") proses++;
+                if (b.status === "Diterima") terima++;
+                else if (b.status === "Proses Ukur") proses++;
                 else if (b.status === "Pemeriksaan") riksa++;
                 else if (b.status === "Selesai") selesai++;
             }
@@ -321,6 +322,7 @@ function updateStaffStats() {
         tbody.innerHTML += `
             <tr>
                 <td><strong>${p}</strong></td>
+                <td><span class="badge diterima">${terima}</span></td>
                 <td><span class="badge proses">${proses}</span></td>
                 <td><span class="badge pemeriksaan">${riksa}</span></td>
                 <td><span class="badge selesai">${selesai}</span></td>
